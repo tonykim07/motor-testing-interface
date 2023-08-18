@@ -23,7 +23,7 @@ class rxPacketIDs(Enum):
     MCMB_CAR_SPEED = 1
     MCMB_MOTOR_TEMPERATURE_ID = 2
         
-class MotorInterface(): 
+class Motor(): 
 
     def __init__(self, serial_port, data_manager: DataManager[SharedData]):
 
@@ -154,7 +154,6 @@ class MotorInterface():
         if print_flag == True: 
             print(data_buffer)
 
-        # parse the data...
 
     def crc32(self, crc, data):
         crc = crc ^ data
@@ -186,38 +185,4 @@ class MotorInterface():
         
         crc = [(raw >> 24) & 0xFF, (raw >> 16) & 0xFF, (raw >> 8) & 0xFF, raw & 0xFF]
         return crc
-
-    def motor_loop(self): 
-        pass
-        # user_input = input()
-        # parse_message = user_input.split()
-
-        # # example message: motor power 5
-        # if "power" in user_input:
-        #     if int(parse_message[2]) >= 0 or int(parse_message[2]) < 256:
-        #         self.motor_target_power = int(parse_message[2])
-        #     else:
-        #         print("Value out of range")
-
-        # elif "vfm up" in user_input:     
-        #     self.vfm_up_state = 1 
-        #     self.vfm_position += 1
-        
-        # elif "vfm down" in user_input: 
-        #     self.vfm_down_state = 1
-        #     if self.vfm_position > 0: 
-        #         self.vfm_position -= 1
-        
-        # elif "eco mode" in user_input: 
-        #     self.eco_power_state = 1
-        
-        # elif "normal mode" in user_input:
-        #     self.eco_power_state = 0
-
-        # elif "shutdown" in user_input:
-        #     self.motor_target_power = 0
-        #     self.motor_target_speed = 0
-        
-        # elif "print tx" in user_input: 
-        #     print(self.packet)
         
