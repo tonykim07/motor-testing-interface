@@ -5,6 +5,6 @@ __all__ = (
     'parse_arguments'
 )
 
-from src.motor_interface import MotorInterface
+from src.motor import MotorInterface
 from src.time_loop import TimeLoop
-from src.main import main, parse_arguments
+from src.main import main
