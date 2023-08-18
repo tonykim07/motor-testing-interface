@@ -134,8 +134,17 @@ class MotorControlUI:
         else:
             self.is_motor_on = False
             self.main_label.config(text="OFF")
+            # set the sliders to 0
+            self.accel_slider.set(0)
+            self.regen_slider.set(0)
+            self.cruise_slider.set(0)
+            self.accel_value = 0
+            self.regen_value = 0
+            self.cruise_value = 0
             with self.data_manager.write() as data:
                 data.motor_state = MotorStates.OFF.value
+                data.motor_target_power = 0
+                data.motor_target_speed = 0
 
     def _toggle_direction(self):
         if self.is_forward:
@@ -150,6 +159,9 @@ class MotorControlUI:
                 data.motor_direction = MotorDirection.FWD.value
 
     def _accel_slider_callback(self, value):
+        if self.is_motor_on == False:
+            self.accel_slider.set(0)
+            return
         self.accel_value = int(value)
         if self.regen_value > 0:
             self.regen_value = 0
@@ -168,6 +180,9 @@ class MotorControlUI:
         pass
 
     def _regen_slider_callback(self, value):
+        if self.is_motor_on == False:
+            self.regen_slider.set(0)
+            return
         self.regen_value = int(value)
         if self.accel_value > 0:
             self.accel_value = 0
@@ -186,6 +201,9 @@ class MotorControlUI:
         pass
 
     def _cruise_slider_callback(self, value):
+        if self.is_motor_on == False:
+            self.cruise_slider.set(0)
+            return
         self.cruise_value = int(value)
         if self.accel_value > 0:
             self.accel_value = 0
