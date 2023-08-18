@@ -11,7 +11,6 @@ from serial import Serial
 
 def main(): 
     try:
-        # Create a shared data manager
         data_manager = DataManager(SharedData())
 
         serial_port = Serial(port="COM5", baudrate=115200, timeout=1) 
@@ -19,14 +18,19 @@ def main():
         motor_interface = Motor(serial_port, data_manager)
         # serial_rx = TimeLoop(0.1, motor_interface.receive_data, False)
         serial_tx = TimeLoop(0.5, motor_interface.send_data)
-        # logger = TimeLoop(0.02, motor_interface.logger)
 
-        MotorControlUI(data_manager).mainloop()
+        ui = MotorControlUI(data_manager)
+        ui.mainloop()
 
-    except KeyboardInterrupt: 
+    finally:
+        # This code will always run after the mainloop, even if the window is closed
         # motor_interface.motor_target_power = 0
         # motor_interface.write_to_csv()
         # print("logged data to csv")
+        serial_tx.stop_loop()
+        print("stopped serial tx loop")
+        print("shutting down motor")
+        motor_interface.shut_down_motor()
         _exit(1)
 
 if __name__ == '__main__':

@@ -6,13 +6,11 @@ from os import path
 from data_manager import DataManager
 from data import MotorStates, MotorDirection, SharedData, EcoPowerState
 
-
 LIGHTBLUE1 = '#8FA5BF'
 LIGHTBLUE2 = '#8FB0BF'
-WINDOW_WIDTH = 450
+WINDOW_WIDTH = 550
 WINDOW_HEIGHT = 300
 BLUEISH = '#356885'
-
 
 class MotorControlUI:
     def __init__(self, data_manager: DataManager[SharedData]):
@@ -24,6 +22,7 @@ class MotorControlUI:
         self.is_forward = True
         self.accel_value = 0
         self.regen_value = 0
+        self.cruise_value = 0
         self.is_accel_turn = True
         self.vfm_count = 0
         self.last_button_press_time = time.time()
@@ -40,8 +39,15 @@ class MotorControlUI:
         self._init_ui_elements()
         self._layout_ui_elements()
 
+        self.root_window.protocol("WM_DELETE_WINDOW", self._on_closing)
+
+
     def mainloop(self):
         self.root_window.mainloop()
+
+    def _on_closing(self):
+        self.root_window.quit()  # Exit mainloop
+
 
     def _init_ui_elements(self):
         self.main_button = self._create_button("MAIN", self._toggle_motor)
@@ -57,6 +63,10 @@ class MotorControlUI:
         self.regen_slider = self._create_slider(self._regen_slider_callback)
         self.regen_label = self._create_label("Regen")
         # self.regen_send_button = self._create_button("Send", self._send_regen_value)
+
+        # add cruise control slider
+        self.cruise_slider = self._create_slider(self._cruise_slider_callback, from_=120, to=0)
+        self.cruise_label = self._create_label("Cruise km/h")
 
         self.vfm_up_button = self._create_button("VFM \n\nUP", self._increment_vfm)
         self.vfm_down_button = self._create_button("VFM \n\nDOWN", self._decrement_vfm)
@@ -76,8 +86,8 @@ class MotorControlUI:
         return tk.Label(self.root_window, text=text, font=('Fixedsys', 12), 
                         bg='black', foreground='yellow')
 
-    def _create_slider(self, callback):
-        return tk.Scale(self.root_window, from_=255, to=0, bg=LIGHTBLUE1, 
+    def _create_slider(self, callback, from_=255, to=0):
+        return tk.Scale(self.root_window, from_=from_, to=to, bg=LIGHTBLUE1, 
                         foreground='black', command=callback)
 
     def _layout_ui_elements(self):
@@ -101,6 +111,10 @@ class MotorControlUI:
         # self.regen_send_button.place(x=slider_column2, y=170, width=slider_width)
         self.regen_label.place(x=slider_column2, y=200)
 
+        slider_column3 = 430
+        self.cruise_slider.place(x=slider_column3, y=50, width=slider_width)
+        self.cruise_label.place(x=slider_column3, y=200)
+
         self.vfm_down_button.place(x=left_column, y=155)
         self.vfm_label.place(x=(right_column - left_column), y=165)
         self.vfm_up_button.place(x=right_column, y=155)
@@ -120,8 +134,17 @@ class MotorControlUI:
         else:
             self.is_motor_on = False
             self.main_label.config(text="OFF")
+            # set the sliders to 0
+            self.accel_slider.set(0)
+            self.regen_slider.set(0)
+            self.cruise_slider.set(0)
+            self.accel_value = 0
+            self.regen_value = 0
+            self.cruise_value = 0
             with self.data_manager.write() as data:
                 data.motor_state = MotorStates.OFF.value
+                data.motor_target_power = 0
+                data.motor_target_speed = 0
 
     def _toggle_direction(self):
         if self.is_forward:
@@ -136,10 +159,16 @@ class MotorControlUI:
                 data.motor_direction = MotorDirection.FWD.value
 
     def _accel_slider_callback(self, value):
+        if self.is_motor_on == False:
+            self.accel_slider.set(0)
+            return
         self.accel_value = int(value)
         if self.regen_value > 0:
             self.regen_value = 0
             self.regen_slider.set(0)
+        if self.cruise_value > 0:
+            self.cruise_value = 0
+            self.cruise_slider.set(0)
         with self.data_manager.write() as data:
             if self.accel_value > 0:
                 data.motor_state = MotorStates.PEDAL.value
@@ -151,12 +180,18 @@ class MotorControlUI:
         pass
 
     def _regen_slider_callback(self, value):
+        if self.is_motor_on == False:
+            self.regen_slider.set(0)
+            return
         self.regen_value = int(value)
         if self.accel_value > 0:
             self.accel_value = 0
             self.accel_slider.set(0)
+        if self.cruise_value > 0:
+            self.cruise_value = 0
+            self.cruise_slider.set(0)
         with self.data_manager.write() as data:
-            if self.regen_value > 0 and self.accel_value == 0:
+            if self.regen_value > 0:
                 data.motor_state = MotorStates.REGEN.value
             else:
                 data.motor_state = MotorStates.STANDBY.value
@@ -164,6 +199,24 @@ class MotorControlUI:
 
     def _send_regen_value(self): # not used
         pass
+
+    def _cruise_slider_callback(self, value):
+        if self.is_motor_on == False:
+            self.cruise_slider.set(0)
+            return
+        self.cruise_value = int(value)
+        if self.accel_value > 0:
+            self.accel_value = 0
+            self.accel_slider.set(0)
+        if self.regen_value > 0:
+            self.regen_value = 0
+            self.regen_slider.set(0)
+        with self.data_manager.write() as data:
+            if self.cruise_value > 0:
+                data.motor_state = MotorStates.CRUISE.value
+            else:
+                data.motor_state = MotorStates.STANDBY.value
+            data.motor_target_speed = self.cruise_value
 
     def _increment_vfm(self):
         if self.vfm_count < 8:

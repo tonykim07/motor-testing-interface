@@ -21,8 +21,8 @@ class TimeLoop():
     def start_loop(self): 
         self.lock.acquire()
         if not self.running: 
-            self._timer = Timer(self.time_interval, self.setup)
-            self._timer.start()
+            self.timer = Timer(self.time_interval, self.setup)
+            self.timer.start()
             self.running = True
         self.lock.release()
         
