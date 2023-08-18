@@ -17,7 +17,7 @@ def main():
 
         motor_interface = MotorInterface(serial_port, data_manager)
         # serial_rx = TimeLoop(0.1, motor_interface.receive_data, False)
-        serial_tx = TimeLoop(0.1, motor_interface.send_data)
+        serial_tx = TimeLoop(0.5, motor_interface.send_data)
         # logger = TimeLoop(0.02, motor_interface.logger)
 
         MotorControlUI(data_manager).mainloop()

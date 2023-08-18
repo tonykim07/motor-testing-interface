@@ -186,9 +186,9 @@ class MotorControlUI:
         if self.eco_power_label.cget('text') == "POWER":
             self.eco_power_label.config(text="ECO")
             with self.data_manager.write() as data:
-                data.motor_eco_power_state = EcoPowerState.POWER.value
+                data.motor_eco_power_state = EcoPowerState.ECO.value
         else:
             self.eco_power_label.config(text="POWER")
             with self.data_manager.write() as data:
-                data.motor_eco_power_state = EcoPowerState.ECO.value
+                data.motor_eco_power_state = EcoPowerState.POWER.value
 
