@@ -5,6 +5,8 @@ from csv import writer
 from socket import htons
 import numpy as np
 from enum import Enum
+from data import MotorStates, SharedData
+from data_manager import DataManager
 
 # Packet Info
 START_BYTE = 0xA5
@@ -16,13 +18,6 @@ DCMB_MOTOR_CONTROL_STATE_ID = 0x05
 # CRC
 NUM_BYTES_IN_WORD = 4
 
-class MotorStates(Enum):
-	OFF = 0
-	PEDAL = 1
-	CRUISE = 2
-	REGEN = 3
-	STANDBY = 4
-        
 class rxPacketIDs(Enum): 
     MCMB_BUS_METRICS_ID = 0
     MCMB_CAR_SPEED = 1
@@ -30,9 +25,10 @@ class rxPacketIDs(Enum):
         
 class MotorInterface(): 
 
-    def __init__(self, com_port, baud_rate, timeout):
+    def __init__(self, serial_port, data_manager: DataManager[SharedData]):
 
-        self.serial_port = Serial(port=com_port, baudrate=baud_rate, timeout=timeout)
+        self.serial_port = serial_port
+        self.data_manager = data_manager
 
         self.motor_state = MotorStates.OFF.value
         self.motor_target_power = 0
@@ -124,24 +120,24 @@ class MotorInterface():
     def send_data(self):
 
         # self.motor_target_power = htons(self.motor_target_power)
-        self.digital_buttons = (self.direction << 3) | (self.vfm_up_state << 2) | (self.vfm_down_state << 1) | self.eco_power_state
-        if self.vfm_down_state == 1:
-            self.vfm_down_state = 0
-        if self.vfm_up_state == 1: 
-            self.vfm_up_state = 0
+        with self.data_manager.read() as data:
+            self.digital_buttons = (data.motor_direction << 3) | data.motor_eco_power_state
 
-        self.packet = [START_BYTE, PAYLOAD_LENGTH, DCMB_ID, SEQUENCE_NUM, 
-                       DCMB_MOTOR_CONTROL_STATE_ID, self.motor_state, self.digital_buttons, self.vfm_position, 
-                       self.motor_target_power, 0, 0, 0,
-                       self.motor_target_speed, 0, 0, 0]
+
+            self.packet = [START_BYTE, PAYLOAD_LENGTH, DCMB_ID, SEQUENCE_NUM, 
+                        DCMB_MOTOR_CONTROL_STATE_ID, data.motor_state, self.digital_buttons, data.motor_vfm_position, 
+                        data.motor_target_power, 0, 0, 0,
+                        self.motor_target_speed, 0, 0, 0]
         
         crc = self.calculate_crc(self.packet, PAYLOAD_LENGTH)
         self.packet += crc
-        # print(bytearray(self.packet))
-        self.serial_port.write(bytearray(self.packet))
+        # print(bytes(self.packet).hex())
+        if self.serial_port != None:
+            self.serial_port.write(bytearray(self.packet))
 
     def receive_data(self, print_flag):
-        data_buffer = self.serial_port.readline().decode('ascii').strip()
+        if self.serial_port != None:
+            data_buffer = self.serial_port.readline().decode('ascii').strip()
 
         # read temperature, voltage, current, speed
         if print_flag == True: 
@@ -181,36 +177,36 @@ class MotorInterface():
         return crc
 
     def motor_loop(self): 
-        
-        user_input = input()
-        parse_message = user_input.split()
+        pass
+        # user_input = input()
+        # parse_message = user_input.split()
 
-        # example message: motor power 5
-        if "power" in user_input:
-            if int(parse_message[2]) >= 0 or int(parse_message[2]) < 256:
-                self.motor_target_power = int(parse_message[2])
-            else:
-                print("Value out of range")
+        # # example message: motor power 5
+        # if "power" in user_input:
+        #     if int(parse_message[2]) >= 0 or int(parse_message[2]) < 256:
+        #         self.motor_target_power = int(parse_message[2])
+        #     else:
+        #         print("Value out of range")
 
-        elif "vfm up" in user_input:     
-            self.vfm_up_state = 1 
-            self.vfm_position += 1
+        # elif "vfm up" in user_input:     
+        #     self.vfm_up_state = 1 
+        #     self.vfm_position += 1
         
-        elif "vfm down" in user_input: 
-            self.vfm_down_state = 1
-            if self.vfm_position > 0: 
-                self.vfm_position -= 1
+        # elif "vfm down" in user_input: 
+        #     self.vfm_down_state = 1
+        #     if self.vfm_position > 0: 
+        #         self.vfm_position -= 1
         
-        elif "eco mode" in user_input: 
-            self.eco_power_state = 1
+        # elif "eco mode" in user_input: 
+        #     self.eco_power_state = 1
         
-        elif "normal mode" in user_input:
-            self.eco_power_state = 0
+        # elif "normal mode" in user_input:
+        #     self.eco_power_state = 0
 
-        elif "shutdown" in user_input:
-            self.motor_target_power = 0
-            self.motor_target_speed = 0
+        # elif "shutdown" in user_input:
+        #     self.motor_target_power = 0
+        #     self.motor_target_speed = 0
         
-        elif "print tx" in user_input: 
-            print(self.packet)
+        # elif "print tx" in user_input: 
+        #     print(self.packet)
         
