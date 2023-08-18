@@ -131,7 +131,7 @@ class Motor():
         
         crc = self.calculate_crc(self.packet, PAYLOAD_LENGTH)
         self.packet += crc
-        # print(bytes(self.packet).hex())
+        print(bytes(self.packet).hex())
         if self.serial_port != None:
             self.serial_port.write(bytearray(self.packet))
 
