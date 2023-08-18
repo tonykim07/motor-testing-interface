@@ -37,50 +37,50 @@ class MotorControlUI:
         self.root_window = root_window
 
         
-        self.__init_ui_elements()
-        self.__layout_ui_elements()
+        self._init_ui_elements()
+        self._layout_ui_elements()
 
     def mainloop(self):
         self.root_window.mainloop()
 
-    def __init_ui_elements(self):
-        self.main_button = self.__create_button("MAIN", self.toggle_motor)
-        self.main_label = self.__create_label("OFF")
+    def _init_ui_elements(self):
+        self.main_button = self._create_button("MAIN", self._toggle_motor)
+        self.main_label = self._create_label("OFF")
         
-        self.direction_button = self.__create_button("FwdRev", self.toggle_direction)
-        self.direction_label = self.__create_label("FWD")
+        self.direction_button = self._create_button("FwdRev", self._toggle_direction)
+        self.direction_label = self._create_label("FWD")
 
-        self.accel_slider = self.__create_slider(self.accel_slider_callback)
-        self.accel_label = self.__create_label("Accel")
-        # self.accel_send_button = self.__create_button("Send", self.send_accel_value)
+        self.accel_slider = self._create_slider(self._accel_slider_callback)
+        self.accel_label = self._create_label("Accel")
+        # self.accel_send_button = self._create_button("Send", self._send_accel_value)
 
-        self.regen_slider = self.__create_slider(self.regen_slider_callback)
-        self.regen_label = self.__create_label("Regen")
-        # self.regen_send_button = self.__create_button("Send", self.send_regen_value)
+        self.regen_slider = self._create_slider(self._regen_slider_callback)
+        self.regen_label = self._create_label("Regen")
+        # self.regen_send_button = self._create_button("Send", self._send_regen_value)
 
-        self.vfm_up_button = self.__create_button("VFM \n\nUP", self.increment_vfm)
-        self.vfm_down_button = self.__create_button("VFM \n\nDOWN", self.decrement_vfm)
-        self.vfm_label = self.__create_label(str(self.vfm_count))
+        self.vfm_up_button = self._create_button("VFM \n\nUP", self._increment_vfm)
+        self.vfm_down_button = self._create_button("VFM \n\nDOWN", self._decrement_vfm)
+        self.vfm_label = self._create_label(str(self.vfm_count))
 
         # create eco power button under vfm buttons. Make it the same type as main button
-        self.eco_power_button = self.__create_button("ECO POWER", self.toggle_eco_power)
-        self.eco_power_label = self.__create_label("ECO")
+        self.eco_power_button = self._create_button("ECO POWER", self._toggle_eco_power)
+        self.eco_power_label = self._create_label("ECO")
 
 
-    def __create_button(self, text, callback):
+    def _create_button(self, text, callback):
         return tk.Button(self.root_window, text=text, command=callback, 
                         background=LIGHTBLUE2, foreground='white', 
                         font=('Fixedsys', 12), borderwidth=3)
 
-    def __create_label(self, text):
+    def _create_label(self, text):
         return tk.Label(self.root_window, text=text, font=('Fixedsys', 12), 
                         bg='black', foreground='yellow')
 
-    def __create_slider(self, callback):
+    def _create_slider(self, callback):
         return tk.Scale(self.root_window, from_=255, to=0, bg=LIGHTBLUE1, 
                         foreground='black', command=callback)
 
-    def __layout_ui_elements(self):
+    def _layout_ui_elements(self):
         left_column = 40
         right_column = left_column + self.button_width + 10
         slider_column = 250
@@ -108,7 +108,7 @@ class MotorControlUI:
         self.eco_power_button.place(x=left_column, y=245, width=self.button_width)
         self.eco_power_label.place(x=right_column, y=245, width=self.label_width+5)
 
-    def toggle_motor(self):
+    def _toggle_motor(self):
         if time.time() - self.last_button_press_time < 1:
             return
         self.last_button_press_time = time.time()
@@ -123,7 +123,7 @@ class MotorControlUI:
             with self.data_manager.write() as data:
                 data.motor_state = MotorStates.OFF.value
 
-    def toggle_direction(self):
+    def _toggle_direction(self):
         if self.is_forward:
             self.direction_label.config(text="REV")
             self.is_forward = False
@@ -135,7 +135,7 @@ class MotorControlUI:
             with self.data_manager.write() as data:
                 data.motor_direction = MotorDirection.FWD.value
 
-    def accel_slider_callback(self, value):
+    def _accel_slider_callback(self, value):
         self.accel_value = int(value)
         if self.regen_value > 0:
             self.regen_value = 0
@@ -147,10 +147,10 @@ class MotorControlUI:
                 data.motor_state = MotorStates.STANDBY.value
             data.motor_target_power = self.accel_value
 
-    def send_accel_value(self): # not used
+    def _send_accel_value(self): # not used
         pass
 
-    def regen_slider_callback(self, value):
+    def _regen_slider_callback(self, value):
         self.regen_value = int(value)
         if self.accel_value > 0:
             self.accel_value = 0
@@ -162,24 +162,24 @@ class MotorControlUI:
                 data.motor_state = MotorStates.STANDBY.value
             data.motor_target_power = self.regen_value
 
-    def send_regen_value(self): # not used
+    def _send_regen_value(self): # not used
         pass
 
-    def increment_vfm(self):
+    def _increment_vfm(self):
         if self.vfm_count < 8:
             self.vfm_count += 1
             self.vfm_label.config(text=str(self.vfm_count))
             with self.data_manager.write() as data:
                 data.motor_vfm_position = self.vfm_count
 
-    def decrement_vfm(self):
+    def _decrement_vfm(self):
         if self.vfm_count > 0:
             self.vfm_count -= 1
             self.vfm_label.config(text=str(self.vfm_count))
             with self.data_manager.write() as data:
                 data.motor_vfm_position = self.vfm_count
     
-    def toggle_eco_power(self):
+    def _toggle_eco_power(self):
         if time.time() - self.last_button_press_time < 1:
             return
         self.last_button_press_time = time.time()
