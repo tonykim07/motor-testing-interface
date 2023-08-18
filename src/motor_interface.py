@@ -5,7 +5,7 @@ from csv import writer
 from socket import htons
 import numpy as np
 from enum import Enum
-from data import MotorStates, SharedData
+from data import MotorStates, SharedData, MotorDirection, EcoPowerState
 from data_manager import DataManager
 
 # Packet Info
@@ -116,6 +116,17 @@ class MotorInterface():
 
                 write.writerow(row)
 
+    def shut_down_motor(self):
+        # set shared_data to default values, which will shut down the motor
+        with self.data_manager.write() as data:
+            data.motor_target_power = 0
+            data.motor_target_speed = 0
+            data.motor_state = MotorStates.OFF.value
+            data.motor_direction = MotorDirection.FWD.value
+            data.motor_vfm_position = 0
+            data.motor_eco_power_state = EcoPowerState.ECO.value
+            
+        self.send_data()
 
     def send_data(self):
 
