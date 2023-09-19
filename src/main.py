@@ -13,7 +13,7 @@ def main():
     try:
         data_manager = DataManager(SharedData())
 
-        serial_port = Serial(port="COM5", baudrate=115200, timeout=1) 
+        serial_port = Serial(port="COM4", baudrate=115200, timeout=1) 
 
         motor_interface = Motor(serial_port, data_manager)
         # serial_rx = TimeLoop(0.1, motor_interface.receive_data, False)

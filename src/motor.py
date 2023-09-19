@@ -137,8 +137,8 @@ class Motor():
 
             self.packet = [START_BYTE, PAYLOAD_LENGTH, DCMB_ID, SEQUENCE_NUM, 
                         DCMB_MOTOR_CONTROL_STATE_ID, data.motor_state, self.digital_buttons, data.motor_vfm_position, 
-                        data.motor_target_power, 0, 0, 0,
-                        self.motor_target_speed, 0, 0, 0]
+                        0, data.motor_target_power, 0, 0,
+                        data.motor_target_speed, 0, 0, 0]
         
         crc = self.calculate_crc(self.packet, PAYLOAD_LENGTH)
         self.packet += crc
